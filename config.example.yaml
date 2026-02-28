@@ -1,0 +1,19 @@
+email:
+  imap_server: "imap.yourprovider.com"
+  smtp_server: "smtp.yourprovider.com"
+  smtp_port: 587
+  address: "you@yourdomain.com"
+  owner: "you@yourdomain.com"
+
+github:
+  token: "your-github-pat"
+  repo: "yourusername/email-rules"
+
+anthropic:
+  api_key: "your-anthropic-api-key"
+  model: "claude-opus-4-6"
+
+paths:
+  rules_dir: "/path/to/your/local/repo/rules"
+  repo: "/path/to/your/local/repo"
+  log_file: "logs/handler.log"
