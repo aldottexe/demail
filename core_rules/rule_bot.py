@@ -12,18 +12,20 @@ import anthropic
 from github import Github
 from git import Repo
 
-OWNER_EMAIL = "you@yourdomain.com"
-ANTHROPIC_API_KEY = "your-anthropic-api-key"
-GITHUB_TOKEN = "your-github-pat"
-GITHUB_REPO = "yourusername/email-rules"
-RULES_DIR = "/path/to/your/local/repo/rules"
-LOCAL_REPO_PATH = "/path/to/your/local/repo"
-SMTP_SERVER = "smtp.yourprovider.com"
-EMAIL = "you@yourdomain.com"
+from utils import cfg
+
+MODERATOR_ADDRESS = cfg['email']['moderator_address']
+ANTHROPIC_API_KEY = cfg['anthropic']['api_key']
+MODEL = cfg['anthropic']['model']
+GITHUB_TOKEN = cfg['github']['token']
+GITHUB_REPO = cfg['github']['repo']
+RULES_DIR = cfg['paths']['rules_dir']
+SMTP_SERVER = cfg['email']['smtp_server']
+EMAIL = cfg['email']['address']
 
 def match(msg):
     return (
-        msg.from_.lower().strip() == OWNER_EMAIL.lower()
+        msg.from_.lower().strip() == MODERATOR_ADDRESS.lower()
         and msg.subject.strip().lower() == "new rule"
     )
 
@@ -55,7 +57,7 @@ def action(msg, mailbox):
 def _generate_rule_code(instruction):
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model=MODEL
         max_tokens=1024,
         messages=[{"role": "user", "content": f"""
 You are a Python code generator for an email automation system.
@@ -63,7 +65,7 @@ You are a Python code generator for an email automation system.
 Generate a Python module with exactly two functions:
 
 1. `match(msg) -> bool` — returns True if this rule applies to the email
-2. `action(msg, mailbox)` — performs the desired action
+2. `action(msg, mailbox)` — performs the desired action. action should True if other actions can also run on top of this email. Rules should return False if taking a permanent action, such as deleting the received email.
 
 The `msg` object (imap_tools) has:
 - msg.from_       sender address string
@@ -92,7 +94,7 @@ Instruction: {instruction}
     return response.content[0].text.strip()
 
 def _push_and_open_pr(filename, code, instruction):
-    repo = Repo(LOCAL_REPO_PATH)
+    repo = Repo(RULES_DIR)
     origin = repo.remotes.origin
     origin.pull("main")
 
