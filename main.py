@@ -6,7 +6,8 @@ import logging
 import importlib.util
 from git import Repo
 from imap_tools import MailBox, AND
-from utils import cfg
+from utils import cfg 
+from datetime import date, timedelta
 
 print(cfg)
 
@@ -68,7 +69,7 @@ def load_rules():
 
 def handle_email(msg, mailbox):
     logging.info(f"New email — From: {msg.from_} | Subject: {msg.subject}")
-    pull_latest()
+    # pull_latest()
     for name, rule in load_rules():
         try:
             if rule.match(msg):
@@ -83,10 +84,13 @@ def main():
         try:
             with MailBox(IMAP_SERVER).login(EMAIL, PASSWORD) as mailbox:
                 logging.info("Connected. Listening for new emails...")
+
+                since = date.today() - timedelta(days=1)
+
                 while True:
                     responses = mailbox.idle.wait(timeout=300)
                     if responses:
-                        for msg in mailbox.fetch(AND(seen=False)):
+                        for msg in mailbox.fetch(AND(seen=False, date_gte=since)):
                             handle_email(msg, mailbox)
                             mailbox.flag(msg.uid, ["\\Seen"], True)
         except Exception as e:

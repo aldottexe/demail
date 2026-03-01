@@ -22,6 +22,7 @@ GITHUB_REPO = cfg['github']['repo']
 RULES_DIR = cfg['paths']['rules_dir']
 SMTP_SERVER = cfg['email']['smtp_server']
 EMAIL = cfg['email']['address']
+EMAIL_PASSWORD = cfg['email']['password']
 
 def match(msg):
     return (
@@ -57,7 +58,7 @@ def action(msg, mailbox):
 def _generate_rule_code(instruction):
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     response = client.messages.create(
-        model=MODEL
+        model=MODEL,
         max_tokens=1024,
         messages=[{"role": "user", "content": f"""
 You are a Python code generator for an email automation system.
@@ -113,11 +114,13 @@ def _push_and_open_pr(filename, code, instruction):
     repo.index.commit(f"Add rule: {instruction[:60]}")
     origin.push(branch_name)
 
+
     gh = Github(GITHUB_TOKEN)
+    username = gh.get_user().login
     pr = gh.get_repo(GITHUB_REPO).create_pull(
         title=f"New rule: {instruction[:60]}",
         body=f"**Instruction:**\n\n> {instruction}\n\nReview before merging.",
-        head=branch_name,
+        head=f"{username}:{branch_name}",
         base="main"
     )
 
@@ -137,5 +140,5 @@ def _send_reply(to, subject, body):
 
     with smtplib.SMTP(SMTP_SERVER, 587) as server:
         server.starttls()
-        server.login(EMAIL, os.environ["EMAIL_PASSWORD"])
+        server.login(EMAIL, EMAIL_PASSWORD)
         server.send_message(msg)
