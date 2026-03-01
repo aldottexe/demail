@@ -120,7 +120,7 @@ def _push_and_open_pr(filename, code, instruction):
     username = gh.get_user().login
 
     # debug pull request creation
-    logging.info(f"Opening PR — head: {branch_name}, base: {cfg['github']['base_branch']}")
+    logging.info(f"Opening PR — head: {branch_name}, base: main")
     pr = gh.get_repo(GITHUB_REPO).create_pull(
         title=f"New rule: {instruction[:60]}",
         body=f"**Instruction:**\n\n> {instruction}\n\nReview before merging.",
