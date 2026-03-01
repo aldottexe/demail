@@ -97,6 +97,7 @@ Instruction: {instruction}
 def _push_and_open_pr(filename, code, instruction):
     repo = Repo(RULES_DIR)
     origin = repo.remotes.origin
+    repo.heads.main.checkout()  
     origin.pull("main")
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -117,13 +118,17 @@ def _push_and_open_pr(filename, code, instruction):
 
     gh = Github(GITHUB_TOKEN)
     username = gh.get_user().login
+
+    # debug pull request creation
+    logging.info(f"Opening PR — head: {branch_name}, base: {cfg['github']['base_branch']}")
     pr = gh.get_repo(GITHUB_REPO).create_pull(
         title=f"New rule: {instruction[:60]}",
         body=f"**Instruction:**\n\n> {instruction}\n\nReview before merging.",
         head=f"{username}:{branch_name}",
         base="main"
     )
-
+    logging.info(f"PR created: {pr.html_url}")
+    
     repo.heads.main.checkout()
     return pr.html_url
 
