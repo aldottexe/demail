@@ -1,0 +1,11 @@
+services:
+  email-handler:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - rules-repo:/app/rules
+      - ./logs:/app/logs
+volumes:
+  rules-repo:
