@@ -12,17 +12,17 @@ import anthropic
 from github import Github
 from git import Repo
 
-from utils import cfg
+from utils import require
 
-MODERATOR_ADDRESS = cfg['email']['moderator_address']
-ANTHROPIC_API_KEY = cfg['anthropic']['api_key']
-MODEL = cfg['anthropic']['model']
-GITHUB_TOKEN = cfg['github']['token']
-GITHUB_REPO = cfg['github']['repo']
-RULES_DIR = cfg['paths']['rules_dir']
-SMTP_SERVER = cfg['email']['smtp_server']
-EMAIL = cfg['email']['address']
-EMAIL_PASSWORD = cfg['email']['password']
+MODERATOR_ADDRESS = require('owner')
+ANTHROPIC_API_KEY = require('anthropic_key')
+MODEL = require('anthropic_model')
+GITHUB_TOKEN = require('token')
+GITHUB_REPO = require('repo')
+RULES_DIR = '/app/rules'
+SMTP_SERVER = require('smtp_server')
+EMAIL = require('address')
+EMAIL_PASSWORD = require('password')
 
 def match(msg):
     return (
@@ -102,7 +102,7 @@ def _push_and_open_pr(filename, code, instruction):
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     slug = re.sub(r"[^a-z0-9_]", "", "_".join(instruction.lower().split()[:4]))
-    branch_name = f"rule/{slug}-{timestamp}"
+    branch_name = f"rule-{slug}-{timestamp}"
 
     new_branch = repo.create_head(branch_name, "main")
     new_branch.checkout()
@@ -117,16 +117,20 @@ def _push_and_open_pr(filename, code, instruction):
 
 
     gh = Github(GITHUB_TOKEN)
-    username = gh.get_user().login
+    user = gh.get_user()
+    gh_repo = user.get_repo(GITHUB_REPO)
+
 
     # debug pull request creation
-    logging.info(f"Opening PR — head: {branch_name}, base: main")
-    pr = gh.get_repo(GITHUB_REPO).create_pull(
-        title=f"New rule: {instruction[:60]}",
-        body=f"**Instruction:**\n\n> {instruction}\n\nReview before merging.",
-        head=f"{username}:{branch_name}",
-        base="main"
-    )
+    logging.info(f"Authenticated as: {user.login}")
+    logging.info(f"Repo: {gh_repo.full_name}")
+
+    pr = gh_repo.create_pull(
+    title=f"New rule: {instruction[:60]}",
+    body=f"**Instruction:**\n\n> {instruction}\n\nReview before merging.",
+    head=f"{user.login}:{branch_name}",  # still need username prefix here
+    base="main"
+)
     logging.info(f"PR created: {pr.html_url}")
     
     repo.heads.main.checkout()

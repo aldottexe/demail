@@ -1,7 +1,7 @@
-import yaml
+import os
 
-def load_config(path="config.yaml"):
-    with open(path) as f:
-        return yaml.safe_load(f)
-
-cfg = load_config()
+def require(key):
+    val = os.environ.get(key)
+    if not val:
+        raise RuntimeError(f"Required environment variable '{key}' is not set")
+    return val
