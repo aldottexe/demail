@@ -36,8 +36,9 @@ def action(msg, mailbox):
 
     try:
         code = _generate_rule_code(instruction)
-        slug = re.sub(r"[^a-z0-9_]", "", "_".join(instruction.lower().split()[:5]))
-        filename = f"{slug}.py"
+        slug = re.sub(r"[^a-z0-9_]", "", "_".join(instruction.lower().split()[:3]))
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M")
+        filename = f"{slug}{timestamp}.py"
         pr_url = _push_and_open_pr(filename, code, instruction)
 
         _send_reply(
