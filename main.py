@@ -143,7 +143,7 @@ def main():
                 since = date.today() - timedelta(days=int(LOOKBACK_DAYS))
 
                 while True:
-                    responses = mailbox.idle.wait(timeout=300)
+                    responses = mailbox.idle.wait(timeout=240)
                     logging.info(f"IDLE responses: {responses}")
                     if not responses:
                         logging.debug("IDLE timeout, polling anyway")
