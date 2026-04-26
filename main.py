@@ -144,11 +144,13 @@ def main():
 
                 while True:
                     responses = mailbox.idle.wait(timeout=300)
-                    if responses:
-                        pull_latest()
-                        for msg in mailbox.fetch(AND(seen=False, date_gte=since)):
-                            handle_email(msg, mailbox)
-                            mailbox.flag(msg.uid, ["\\Seen"], True)
+                    logging.info(f"IDLE responses: {responses}")
+                    if not responses:
+                        logging.debug("IDLE timeout, polling anyway")
+                    pull_latest()
+                    for msg in mailbox.fetch(AND(seen=False, date_gte=since)):
+                        handle_email(msg, mailbox)
+                        mailbox.flag(msg.uid, ["\\Seen"], True)
         except Exception as e:
             logging.error(f"Connection error: {e}. Reconnecting in 30 seconds...")
             time.sleep(30)
